@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/game.dart';
+import '../services/user_session.dart';
+
 
 class ChatScreen extends StatefulWidget {
   final Game game;
@@ -37,7 +39,14 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
 
     setState(() {
-      _messages.add(_Message(user: 'You', text: text, time: _nowHHmm()));
+      final username = UserSession.currentUser?.username ?? 'You';
+
+      _messages.add(_Message(
+        user: username,
+        text: text,
+        time: _nowHHmm(),
+      ));
+
     });
 
     _controller.clear();
@@ -58,7 +67,9 @@ class _ChatScreenState extends State<ChatScreen> {
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final m = _messages[index];
-                final isMe = m.user == 'You';
+                final me = UserSession.currentUser?.username;
+                final isMe = m.user == me;
+
                 return _MessageBubble(message: m, isMe: isMe);
               },
             ),
@@ -104,10 +115,12 @@ class _MessageBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: align,
         children: [
-          Text(
-            isMe ? 'You' : message.user,
-            style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12),
-          ),
+          if (!isMe)
+            Text(
+              message.user,
+              style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12),
+            ),
+
           const SizedBox(height: 6),
           Container(
             constraints: const BoxConstraints(maxWidth: 320),

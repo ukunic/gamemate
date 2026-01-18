@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/game_list_screen.dart';
+import 'screens/username_screen.dart';
 
 void main() {
   runApp(const GameMateApp());
@@ -11,13 +11,12 @@ class GameMateApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'GameMate',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
       ),
-      home: const GameListScreen(),
+      home: const UsernameScreen(),
     );
   }
 }
