@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/game.dart';
 import '../services/user_session.dart';
-
+import '../services/chat_repository.dart';
 
 class ChatScreen extends StatefulWidget {
   final Game game;
@@ -14,12 +14,21 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _controller = TextEditingController();
+  late List<ChatMessage> _messages;
 
-  final List<_Message> _messages = [
-    _Message(user: 'Umut', text: 'Anyone for duo?', time: '21:03'),
-    _Message(user: 'Mert', text: 'Rank?', time: '21:04'),
-    _Message(user: 'Umut', text: 'Gold 2', time: '21:04'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _messages = ChatRepository.messagesFor(widget.game);
+
+    // Room ilk kez açılıyorsa: örnek mesajlar (opsiyonel ama güzel)
+    if (_messages.isEmpty) {
+      _messages.addAll([
+        const ChatMessage(user: 'Mert', text: 'Anyone duo?', time: '21:03'),
+        const ChatMessage(user: 'Ece', text: 'Rank?', time: '21:04'),
+      ]);
+    }
+  }
 
   @override
   void dispose() {
@@ -38,15 +47,17 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    final username = UserSession.currentUser?.username ?? 'Unknown';
+
     setState(() {
-      final username = UserSession.currentUser?.username ?? 'You';
-
-      _messages.add(_Message(
-        user: username,
-        text: text,
-        time: _nowHHmm(),
-      ));
-
+      ChatRepository.addMessage(
+        widget.game,
+        ChatMessage(
+          user: username,
+          text: text,
+          time: _nowHHmm(),
+        ),
+      );
     });
 
     _controller.clear();
@@ -55,6 +66,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final me = UserSession.currentUser?.username;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.game.name),
@@ -67,9 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final m = _messages[index];
-                final me = UserSession.currentUser?.username;
-                final isMe = m.user == me;
-
+                final isMe = (me != null) && (m.user == me);
                 return _MessageBubble(message: m, isMe: isMe);
               },
             ),
@@ -84,20 +95,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-class _Message {
-  final String user;
-  final String text;
-  final String time;
-
-  const _Message({
-    required this.user,
-    required this.text,
-    required this.time,
-  });
-}
-
 class _MessageBubble extends StatelessWidget {
-  final _Message message;
+  final ChatMessage message;
   final bool isMe;
 
   const _MessageBubble({
@@ -115,13 +114,14 @@ class _MessageBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: align,
         children: [
+          // Sadece diğer kullanıcıların adını göster
           if (!isMe)
             Text(
               message.user,
               style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12),
             ),
+          if (!isMe) const SizedBox(height: 6),
 
-          const SizedBox(height: 6),
           Container(
             constraints: const BoxConstraints(maxWidth: 320),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -132,6 +132,7 @@ class _MessageBubble extends StatelessWidget {
             ),
             child: Text(message.text),
           ),
+
           const SizedBox(height: 4),
           Text(
             message.time,
