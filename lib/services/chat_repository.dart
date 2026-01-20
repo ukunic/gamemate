@@ -1,25 +1,13 @@
-import '../models/game.dart';
+import '../models/chat_message.dart';
 
 class ChatRepository {
-  static final Map<String, List<ChatMessage>> _store = {};
+  final Map<String, List<ChatMessage>> _store = {};
 
-  static List<ChatMessage> messagesFor(Game game) {
-    return _store.putIfAbsent(game.id, () => []);
+  List<ChatMessage> messagesForRoom(String roomId) {
+    return _store.putIfAbsent(roomId, () => []);
   }
 
-  static void addMessage(Game game, ChatMessage message) {
-    messagesFor(game).add(message);
+  void addMessage(String roomId, ChatMessage message) {
+    messagesForRoom(roomId).add(message);
   }
-}
-
-class ChatMessage {
-  final String user;
-  final String text;
-  final String time;
-
-  const ChatMessage({
-    required this.user,
-    required this.text,
-    required this.time,
-  });
 }

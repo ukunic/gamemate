@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+import '../models/chat_message.dart';
 import '../models/game.dart';
+import '../services/app_repositories.dart';
+import 'package:flutter/material.dart';
 import '../services/user_session.dart';
-import '../services/chat_repository.dart';
+
 
 class ChatScreen extends StatefulWidget {
   final Game game;
@@ -13,13 +15,15 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final _scrollController = ScrollController();
   final _controller = TextEditingController();
   late List<ChatMessage> _messages;
 
   @override
   void initState() {
     super.initState();
-    _messages = ChatRepository.messagesFor(widget.game);
+    _messages = chatRepository.messagesForRoom(widget.game.id);
+
 
     // Room ilk kez açılıyorsa: örnek mesajlar (opsiyonel ama güzel)
     if (_messages.isEmpty) {
@@ -28,13 +32,18 @@ class _ChatScreenState extends State<ChatScreen> {
         const ChatMessage(user: 'Ece', text: 'Rank?', time: '21:04'),
       ]);
     }
+
+    _scrollToBottom();
+
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
+
 
   String _nowHHmm() {
     final now = DateTime.now();
@@ -50,18 +59,22 @@ class _ChatScreenState extends State<ChatScreen> {
     final username = UserSession.currentUser?.username ?? 'Unknown';
 
     setState(() {
-      ChatRepository.addMessage(
-        widget.game,
+      chatRepository.addMessage(
+        widget.game.id,
         ChatMessage(
           user: username,
           text: text,
           time: _nowHHmm(),
         ),
       );
+
     });
 
     _controller.clear();
     FocusScope.of(context).unfocus();
+
+    _scrollToBottom();
+
   }
 
   @override
@@ -76,6 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(12),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
@@ -93,6 +107,19 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
 }
 
 class _MessageBubble extends StatelessWidget {
