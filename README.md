@@ -1,16 +1,30 @@
-# gamemate
+# GameMate 🎮
 
-A new Flutter project.
+GameMate is a Flutter-based mobile app that helps gamers find teammates via game-specific chat rooms.
 
-## Getting Started
+## Current Features
+- Choose a username (temporary session)
+- Browse a list of popular multiplayer games
+- Join game-specific chat rooms
+- Send messages with an in-memory chat UI
+- Separate chat state per game room
+- Auto-scroll to the latest message
 
-This project is a starting point for a Flutter application.
+## Tech Stack
+- Flutter + Dart
+- In-memory state management
+- Repository pattern (room-based storage)
 
-A few resources to get you started if this is your first Flutter project:
+## Project Structure
+- `lib/models/` → Data models
+- `lib/services/` → Session & repositories
+- `lib/screens/` → UI screens
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Next Steps
+- Firebase Authentication
+- Realtime Database (rooms + messages)
+- User presence / online status
+- Push notifications
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Author
+Umut Kunic

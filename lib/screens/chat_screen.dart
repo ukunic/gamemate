@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../services/user_session.dart';
 
 
+
 class ChatScreen extends StatefulWidget {
   final Game game;
 
