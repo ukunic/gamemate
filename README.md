@@ -1,5 +1,13 @@
 # GameMate 🎮
 
+## Screenshots
+
+<p float="left">
+  <img src="assets/screenshots/game_list.png" width="240" />
+  <img src="assets/screenshots/chat.png" width="240" />
+</p>
+
+
 GameMate is a Flutter-based mobile app that helps gamers find teammates via game-specific chat rooms.
 
 ## Current Features
