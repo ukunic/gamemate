@@ -1,10 +1,9 @@
+import 'package:flutter/material.dart';
+
 import '../models/chat_message.dart';
 import '../models/game.dart';
-import '../services/app_repositories.dart';
-import 'package:flutter/material.dart';
+import '../services/firestore_chat_repository.dart';
 import '../services/user_session.dart';
-
-
 
 class ChatScreen extends StatefulWidget {
   final Game game;
@@ -18,25 +17,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
   final _controller = TextEditingController();
-  late List<ChatMessage> _messages;
 
-  @override
-  void initState() {
-    super.initState();
-    _messages = chatRepository.messagesForRoom(widget.game.id);
-
-
-    // Room ilk kez açılıyorsa: örnek mesajlar (opsiyonel ama güzel)
-    if (_messages.isEmpty) {
-      _messages.addAll([
-        const ChatMessage(user: 'Mert', text: 'Anyone duo?', time: '21:03'),
-        const ChatMessage(user: 'Ece', text: 'Rank?', time: '21:04'),
-      ]);
-    }
-
-    _scrollToBottom();
-
-  }
+  final _repo = FirestoreChatRepository();
 
   @override
   void dispose() {
@@ -45,42 +27,48 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-
-  String _nowHHmm() {
-    final now = DateTime.now();
-    final hh = now.hour.toString().padLeft(2, '0');
-    final mm = now.minute.toString().padLeft(2, '0');
+  String _hhmm(DateTime dt) {
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
     return '$hh:$mm';
   }
 
-  void _send() {
+  Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    final username = UserSession.currentUser?.username ?? 'Unknown';
+    final user = UserSession.currentUser;
+    if (user == null) return; // username ekranından gelinmiyorsa güvenlik
 
-    setState(() {
-      chatRepository.addMessage(
-        widget.game.id,
-        ChatMessage(
-          user: username,
-          text: text,
-          time: _nowHHmm(),
-        ),
-      );
-
-    });
+    await _repo.sendMessage(
+      gameId: widget.game.id,
+      message: ChatMessage(
+        userId: user.uid,
+        username: user.username,
+        text: text,
+        createdAt: DateTime.now(),
+      ),
+    );
 
     _controller.clear();
     FocusScope.of(context).unfocus();
-
     _scrollToBottom();
+  }
 
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final me = UserSession.currentUser?.username;
+    final myUid = UserSession.currentUser?.uid;
 
     return Scaffold(
       appBar: AppBar(
@@ -89,14 +77,43 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(12),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final m = _messages[index];
-                final isMe = (me != null) && (m.user == me);
-                return _MessageBubble(message: m, isMe: isMe);
+            child: StreamBuilder<List<ChatMessage>>(
+              stream: _repo.watchMessages(widget.game.id),
+              builder: (context, snapshot) {
+                final messages = snapshot.data ?? [];
+
+                // yeni mesaj gelince en alta kay
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollToBottom();
+                });
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (messages.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No messages yet. Say hi 👋',
+                      style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final m = messages[index];
+                    final isMe = (myUid != null) && (m.userId == myUid);
+                    return _MessageBubble(
+                      message: m,
+                      isMe: isMe,
+                      timeText: _hhmm(m.createdAt),
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -108,28 +125,17 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    });
-  }
-
 }
 
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
+  final String timeText;
 
   const _MessageBubble({
     required this.message,
     required this.isMe,
+    required this.timeText,
   });
 
   @override
@@ -142,10 +148,9 @@ class _MessageBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: align,
         children: [
-          // Sadece diğer kullanıcıların adını göster
           if (!isMe)
             Text(
-              message.user,
+              message.username,
               style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12),
             ),
           if (!isMe) const SizedBox(height: 6),
@@ -163,7 +168,7 @@ class _MessageBubble extends StatelessWidget {
 
           const SizedBox(height: 4),
           Text(
-            message.time,
+            timeText,
             style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
           ),
         ],
@@ -174,7 +179,7 @@ class _MessageBubble extends StatelessWidget {
 
 class _Composer extends StatelessWidget {
   final TextEditingController controller;
-  final VoidCallback onSend;
+  final Future<void> Function() onSend;
 
   const _Composer({
     required this.controller,
@@ -211,7 +216,7 @@ class _Composer extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             IconButton(
-              onPressed: onSend,
+              onPressed: () => onSend(),
               icon: const Icon(Icons.send),
             ),
           ],

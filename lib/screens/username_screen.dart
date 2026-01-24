@@ -12,11 +12,11 @@ class UsernameScreen extends StatefulWidget {
 class _UsernameScreenState extends State<UsernameScreen> {
   final _controller = TextEditingController();
 
-  void _continue() {
+  void _continue() async {
     final name = _controller.text.trim();
     if (name.length < 3) return;
 
-    UserSession.login(name);
+    await UserSession.login(name);
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const GameListScreen()),

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "365215421238",
+    "project_id": "gamemate-945aa",
+    "storage_bucket": "gamemate-945aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365215421238:android:f7c1348359c998d4889997",
+        "android_client_info": {
+          "package_name": "com.example.gamemate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD045H1VI1wuHdWXuWYvJKXSfcSLdk6-Dk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
