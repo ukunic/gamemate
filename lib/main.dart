@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:gamemate/screens/username_screen.dart';
 import 'firebase_options.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/username_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,19 @@ class GameMateApp extends StatelessWidget {
         brightness: Brightness.dark,
         useMaterial3: true,
       ),
-      home: const UsernameScreen(),
+      home: FutureBuilder<bool>(
+        future: OnboardingScreen.isDone(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          final done = snapshot.data!;
+          return done ? const UsernameScreen() : const OnboardingScreen();
+        },
+      ),
     );
   }
 }

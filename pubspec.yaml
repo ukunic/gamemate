@@ -37,6 +37,8 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
+  flutter_native_splash: ^2.4.7
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +61,23 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/
+
+
+flutter_native_splash:
+  color: "#0F0F1A"
+  image: assets/logo.png
+
+  android: true
+  ios: true
+  web: false
+
+  android_12:
+    color: "#0F0F1A"
+    image: assets/logo.png
+
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -90,3 +109,5 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+

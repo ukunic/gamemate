@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-
 import '../models/chat_message.dart';
 import '../models/game.dart';
 import '../services/firestore_chat_repository.dart';
 import '../services/user_session.dart';
+
 
 class ChatScreen extends StatefulWidget {
   final Game game;
@@ -42,13 +42,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
     await _repo.sendMessage(
       gameId: widget.game.id,
-      message: ChatMessage(
-        userId: user.uid,
-        username: user.username,
-        text: text,
-        createdAt: DateTime.now(),
-      ),
+      userId: user.uid,
+      username: user.username,
+      text: text,
     );
+
 
     _controller.clear();
     FocusScope.of(context).unfocus();
@@ -68,7 +66,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final myUid = UserSession.currentUser?.uid;
 
     return Scaffold(
       appBar: AppBar(
@@ -78,8 +75,9 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
-              stream: _repo.watchMessages(widget.game.id),
+              stream: _repo.watchMessages(widget.game.id, limit: 60),
               builder: (context, snapshot) {
+                final myUid = UserSession.currentUser?.uid;
                 final messages = snapshot.data ?? [];
 
                 // yeni mesaj gelince en alta kay
@@ -101,6 +99,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 return ListView.builder(
+                  reverse: true,
                   controller: _scrollController,
                   padding: const EdgeInsets.all(12),
                   itemCount: messages.length,

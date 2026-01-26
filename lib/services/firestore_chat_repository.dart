@@ -8,17 +8,31 @@ class FirestoreChatRepository {
     return _db.collection('games').doc(gameId).collection('messages');
   }
 
-  Stream<List<ChatMessage>> watchMessages(String gameId) {
+  /// Newest-first çekiyoruz (performans + pagination için daha iyi)
+  Stream<List<ChatMessage>> watchMessages(String gameId, {int limit = 60}) {
     return _messagesRef(gameId)
-        .orderBy('createdAt', descending: false)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => ChatMessage.fromMap(d.data())).toList());
+        .map((snap) {
+      return snap.docs.map((doc) => ChatMessage.fromDoc(doc)).toList();
+    });
   }
 
+  /// createdAt serverTimestamp: cihaz saatinden bağımsız
   Future<void> sendMessage({
     required String gameId,
-    required ChatMessage message,
+    required String userId,
+    required String username,
+    required String text,
   }) async {
-    await _messagesRef(gameId).add(message.toMap());
+    await _messagesRef(gameId).add({
+      'userId': userId,
+      'username': username,
+      'text': text,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }
+
+final firestoreChatRepo = FirestoreChatRepository();
