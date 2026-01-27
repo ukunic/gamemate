@@ -86,17 +86,39 @@ class _ChatScreenState extends State<ChatScreen> {
                 });
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const _ChatLoading();
                 }
+
 
                 if (messages.isEmpty) {
                   return Center(
-                    child: Text(
-                      'No messages yet. Say hi 👋',
-                      style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.chat_bubble_outline, size: 42),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'No messages yet',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Be the first to start the conversation 👋',
+                            style: TextStyle(color: Colors.white.withOpacity(0.65)),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
+
 
                 return ListView.builder(
                   reverse: true,
@@ -199,7 +221,8 @@ class _Composer extends StatelessWidget {
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => onSend(),
                 decoration: InputDecoration(
-                  hintText: 'Message…',
+                  hintText: 'Type a message…',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   filled: true,
                   fillColor: Colors.white.withOpacity(0.06),
                   border: OutlineInputBorder(
@@ -224,3 +247,28 @@ class _Composer extends StatelessWidget {
     );
   }
 }
+
+class _ChatLoading extends StatelessWidget {
+  const _ChatLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
