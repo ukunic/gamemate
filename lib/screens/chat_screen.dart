@@ -18,6 +18,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
   final _controller = TextEditingController();
 
+  DateTime? _lastSentAt;
+
   final _repo = FirestoreChatRepository();
 
   @override
@@ -37,8 +39,25 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    if (text.length > 300) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Message is too long (max 300).')),
+      );
+      return;
+    }
+
     final user = UserSession.currentUser;
-    if (user == null) return; // username ekranından gelinmiyorsa güvenlik
+    if (user == null) return;
+
+    // 🔒 anti-spam (2 saniye)
+    final now = DateTime.now();
+    if (_lastSentAt != null &&
+        now.difference(_lastSentAt!).inSeconds < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Slow down 🙂')),
+      );
+      return;
+    }
 
     await _repo.sendMessage(
       gameId: widget.game.id,
@@ -47,11 +66,13 @@ class _ChatScreenState extends State<ChatScreen> {
       text: text,
     );
 
+    _lastSentAt = now; // 👈 bunu ekliyoruz
 
     _controller.clear();
     FocusScope.of(context).unfocus();
     _scrollToBottom();
   }
+
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
